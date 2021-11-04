@@ -4,6 +4,8 @@ import (
 	"github.com/sirupsen/logrus"
 	"log"
 	"os"
+	"os/exec"
+	"syscall"
 )
 
 func Run() {
@@ -11,8 +13,24 @@ func Run() {
 	Dispatch(os.Args, logger)
 }
 
-func parent(logger *logrus.Logger) {
+func setStdInOut(cmd *exec.Cmd) *exec.Cmd {
+	cmd.Stdin = os.Stdin
+	cmd.Stdout = os.Stdout
+	cmd.Stderr = os.Stderr
+	return cmd
+}
 
+func parent(logger *logrus.Logger) {
+	logger.Infof("Running %v\n", os.Args[2:])
+	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+	cmd = setStdInOut(cmd)
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
+	}
+
+	if err := cmd.Run(); err != nil {
+		logger.Panicf("error: %s", err.Error())
+	}
 }
 
 func child(logger *logrus.Logger) {
