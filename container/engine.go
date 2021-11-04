@@ -33,10 +33,10 @@ func parent(logger *logrus.Logger) {
 	}
 }
 
-func setHostname() {
+func setHostname(logger *logrus.Logger) {
 	err := syscall.Sethostname([]byte("vspazzz"))
 	if err != nil {
-		return
+		logger.Errorf("failed to set hostname %s", err)
 	}
 }
 
@@ -44,7 +44,18 @@ func child(logger *logrus.Logger) {
 	logger.Infof("Running %v\n", os.Args[2:])
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 	cmd = setStdInOut(cmd)
-	setHostname()
+	setHostname(logger)
+
+	syscall.Mount("proc", "proc", "proc", 0, "")
+	err := syscall.Chroot("/home/vspaz/ubuntufs")
+	if err != nil {
+		panic(err)
+	}
+	syscall.Chdir("/")
+	if err := cmd.Run(); err != nil {
+		panic(err)
+	}
+	syscall.Unmount("proc", 0)
 }
 
 func Dispatch(args []string, logger *logrus.Logger) {
