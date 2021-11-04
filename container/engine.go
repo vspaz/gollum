@@ -1,28 +1,30 @@
 package container
 
 import (
+	"github.com/sirupsen/logrus"
 	"log"
 	"os"
 )
 
 func Run() {
-	Dispatch(os.Args)
+	logger := ConfigureLogger(logrus.InfoLevel)
+	Dispatch(os.Args, logger)
 }
 
-func parent() {
-
-}
-
-func child() {
+func parent(logger *logrus.Logger) {
 
 }
 
-func Dispatch(args []string) {
+func child(logger *logrus.Logger) {
+
+}
+
+func Dispatch(args []string, logger *logrus.Logger) {
 	switch args[1] {
 	case "run":
-		parent()
+		parent(logger)
 	case "child":
-		child()
+		child(logger)
 	default:
 		log.Panicf("method undefined %s", args[1])
 	}
