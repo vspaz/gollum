@@ -1,5 +1,7 @@
 package main
 
-func main() {
+import "gollum/engine"
 
+func main() {
+	engine.Run()
 }
