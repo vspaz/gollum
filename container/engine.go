@@ -19,7 +19,7 @@ func child() {
 
 func Dispatch(args []string) {
 	switch args[1] {
-	case "parent":
+	case "run":
 		parent()
 	case "child":
 		child()
