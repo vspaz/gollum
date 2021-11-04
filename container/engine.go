@@ -33,8 +33,18 @@ func parent(logger *logrus.Logger) {
 	}
 }
 
-func child(logger *logrus.Logger) {
+func setHostname() {
+	err := syscall.Sethostname([]byte("vspazzz"))
+	if err != nil {
+		return
+	}
+}
 
+func child(logger *logrus.Logger) {
+	logger.Infof("Running %v\n", os.Args[2:])
+	cmd := exec.Command(os.Args[2], os.Args[3:]...)
+	cmd = setStdInOut(cmd)
+	setHostname()
 }
 
 func Dispatch(args []string, logger *logrus.Logger) {
