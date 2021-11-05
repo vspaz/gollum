@@ -75,8 +75,41 @@ func runCommand(cmd *exec.Cmd) {
 	}
 }
 
+func NewContainer(args []string) *Container {
+	return &Container{cmd: exec.Command(args[2], args[3:]...)}
+}
+
+type Container struct {
+	cmd *exec.Cmd
+}
+
+func (c *Container) setStdStreams() {
+	c.cmd.Stdin = os.Stdin
+	c.cmd.Stdout = os.Stdout
+	c.cmd.Stderr = os.Stderr
+}
+
+func (c Container) setHostname(hostname string) {
+	err := syscall.Sethostname([]byte(hostname))
+	if err != nil {
+		logger.Errorf("failed to set hostname %s", err)
+	}
+}
+
+func (c Container) mountProc() {
+	err := syscall.Mount("proc", "proc", "proc", 0, "")
+	if err != nil {
+		logger.Errorf("failed to mount proc %s", err.Error())
+	}
+}
+
 func child() {
 	logger.Infof("Running %v\n", os.Args[2:])
+	container := NewContainer(os.Args)
+	container.setStdStreams()
+	container.setHostname("vspazzz")
+	container.mountProc()
+
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 	cmd = setStdInOut(cmd)
 	setHostname("vspazzz")
