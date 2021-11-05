@@ -103,21 +103,43 @@ func (c Container) mountProc() {
 	}
 }
 
+func (c Container) mountFs(fsDirPath string) {
+	err := syscall.Chroot(fsDirPath)
+	if err != nil {
+		panic(err)
+	}
+}
+
+func (c Container) changeIntoDirectory(dirName string) {
+	err := syscall.Chdir(dirName)
+	if err != nil {
+		logger.Errorf("failed to chdir directory: %s", err.Error())
+	}
+}
+
+func (c *Container) runCommand() {
+	if err := c.cmd.Run(); err != nil {
+		logger.Panicf("failed to run cmd %s", err)
+	}
+}
+
+func (c Container) unmountProc() {
+	err := syscall.Unmount("proc", 0)
+	if err != nil {
+		logger.Errorf("failed to mount 'proc' %s", err.Error())
+	}
+}
+
 func child() {
 	logger.Infof("Running %v\n", os.Args[2:])
 	container := NewContainer(os.Args)
 	container.setStdStreams()
 	container.setHostname("vspazzz")
 	container.mountProc()
-
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-	cmd = setStdInOut(cmd)
-	setHostname("vspazzz")
-	mountProc()
-	mountFs("/home/vspaz/ubuntufs")
-	changeIntoDirectory("/")
-	runCommand(cmd)
-	unmountProc()
+	container.mountFs("/home/vspaz/ubuntufs")
+	container.changeIntoDirectory("/")
+	container.runCommand()
+	container.unmountProc()
 }
 
 func Dispatch(args []string) {
