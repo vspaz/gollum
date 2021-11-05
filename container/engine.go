@@ -8,9 +8,10 @@ import (
 	"syscall"
 )
 
+var logger = ConfigureLogger(logrus.InfoLevel)
+
 func Run() {
-	logger := ConfigureLogger(logrus.InfoLevel)
-	Dispatch(os.Args, logger)
+	Dispatch(os.Args)
 }
 
 func setStdInOut(cmd *exec.Cmd) *exec.Cmd {
@@ -20,7 +21,7 @@ func setStdInOut(cmd *exec.Cmd) *exec.Cmd {
 	return cmd
 }
 
-func parent(logger *logrus.Logger) {
+func parent() {
 	logger.Infof("Running %v\n", os.Args[2:])
 	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
 	cmd = setStdInOut(cmd)
@@ -33,37 +34,65 @@ func parent(logger *logrus.Logger) {
 	}
 }
 
-func setHostname(logger *logrus.Logger) {
+func setHostname() {
 	err := syscall.Sethostname([]byte("vspazzz"))
 	if err != nil {
 		logger.Errorf("failed to set hostname %s", err)
 	}
 }
 
-func child(logger *logrus.Logger) {
-	logger.Infof("Running %v\n", os.Args[2:])
-	cmd := exec.Command(os.Args[2], os.Args[3:]...)
-	cmd = setStdInOut(cmd)
-	setHostname(logger)
+func mountProc() {
+	err := syscall.Mount("proc", "proc", "proc", 0, "")
+	if err != nil {
+		logger.Errorf("failed to mount proc %s", err.Error())
+	}
+}
 
-	syscall.Mount("proc", "proc", "proc", 0, "")
+func mountFs() {
 	err := syscall.Chroot("/home/vspaz/ubuntufs")
 	if err != nil {
 		panic(err)
 	}
-	syscall.Chdir("/")
-	if err := cmd.Run(); err != nil {
-		panic(err)
-	}
-	syscall.Unmount("proc", 0)
 }
 
-func Dispatch(args []string, logger *logrus.Logger) {
+func changeIntoDirectory() {
+	err := syscall.Chdir("/")
+	if err != nil {
+		logger.Errorf("failed to chdir directory: %s", err.Error())
+	}
+}
+
+func unmountProc() {
+	err := syscall.Unmount("proc", 0)
+	if err != nil {
+		logger.Errorf("failed to mount 'proc' %s", err.Error())
+	}
+}
+
+func runCommand(cmd *exec.Cmd) {
+	if err := cmd.Run(); err != nil {
+		logger.Panicf("failed to run cmd %s", err)
+	}
+}
+
+func child() {
+	logger.Infof("Running %v\n", os.Args[2:])
+	cmd := exec.Command(os.Args[2], os.Args[3:]...)
+	cmd = setStdInOut(cmd)
+	setHostname()
+	mountProc()
+	mountFs()
+	changeIntoDirectory()
+	runCommand(cmd)
+	unmountProc()
+}
+
+func Dispatch(args []string) {
 	switch args[1] {
 	case "run":
-		parent(logger)
+		parent()
 	case "child":
-		child(logger)
+		child()
 	default:
 		log.Panicf("method undefined %s", args[1])
 	}
