@@ -34,8 +34,8 @@ func parent() {
 	}
 }
 
-func setHostname() {
-	err := syscall.Sethostname([]byte("vspazzz"))
+func setHostname(hostname string) {
+	err := syscall.Sethostname([]byte(hostname))
 	if err != nil {
 		logger.Errorf("failed to set hostname %s", err)
 	}
@@ -48,15 +48,15 @@ func mountProc() {
 	}
 }
 
-func mountFs() {
-	err := syscall.Chroot("/home/vspaz/ubuntufs")
+func mountFs(fsDirPath string) {
+	err := syscall.Chroot(fsDirPath)
 	if err != nil {
 		panic(err)
 	}
 }
 
-func changeIntoDirectory() {
-	err := syscall.Chdir("/")
+func changeIntoDirectory(dirName string) {
+	err := syscall.Chdir(dirName)
 	if err != nil {
 		logger.Errorf("failed to chdir directory: %s", err.Error())
 	}
@@ -79,10 +79,10 @@ func child() {
 	logger.Infof("Running %v\n", os.Args[2:])
 	cmd := exec.Command(os.Args[2], os.Args[3:]...)
 	cmd = setStdInOut(cmd)
-	setHostname()
+	setHostname("vspazzz")
 	mountProc()
-	mountFs()
-	changeIntoDirectory()
+	mountFs("/home/vspaz/ubuntufs")
+	changeIntoDirectory("/")
 	runCommand(cmd)
 	unmountProc()
 }
