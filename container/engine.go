@@ -34,47 +34,6 @@ func parent() {
 	}
 }
 
-func setHostname(hostname string) {
-	err := syscall.Sethostname([]byte(hostname))
-	if err != nil {
-		logger.Errorf("failed to set hostname %s", err)
-	}
-}
-
-func mountProc() {
-	err := syscall.Mount("proc", "proc", "proc", 0, "")
-	if err != nil {
-		logger.Errorf("failed to mount proc %s", err.Error())
-	}
-}
-
-func mountFs(fsDirPath string) {
-	err := syscall.Chroot(fsDirPath)
-	if err != nil {
-		panic(err)
-	}
-}
-
-func changeIntoDirectory(dirName string) {
-	err := syscall.Chdir(dirName)
-	if err != nil {
-		logger.Errorf("failed to chdir directory: %s", err.Error())
-	}
-}
-
-func unmountProc() {
-	err := syscall.Unmount("proc", 0)
-	if err != nil {
-		logger.Errorf("failed to mount 'proc' %s", err.Error())
-	}
-}
-
-func runCommand(cmd *exec.Cmd) {
-	if err := cmd.Run(); err != nil {
-		logger.Panicf("failed to run cmd %s", err)
-	}
-}
-
 func NewContainer(args []string) *Container {
 	return &Container{cmd: exec.Command(args[2], args[3:]...)}
 }
