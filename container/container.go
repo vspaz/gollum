@@ -6,24 +6,15 @@ import (
 	"syscall"
 )
 
-func setStdInOut(cmd *exec.Cmd) *exec.Cmd {
-	cmd.Stdin = os.Stdin
-	cmd.Stdout = os.Stdout
-	cmd.Stderr = os.Stderr
-	return cmd
-}
-
 func fork() {
 	// execute yourself, /proc/self/exe is the copy of the binary image of the caller itself
 	cmd := exec.Command("/proc/self/exe", append([]string{"subprocess"}, os.Args[2:]...)...)
-	cmd = setStdInOut(cmd)
+	container := Container{cmd: cmd}
+	container.setStdStreams()
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
 	}
-
-	if err := cmd.Run(); err != nil {
-		logger.Panicf("error: %s", err.Error())
-	}
+	container.runCommand()
 }
 
 func NewContainer(args []string) *Container {
