@@ -11,9 +11,7 @@ func fork() {
 	cmd := exec.Command("/proc/self/exe", append([]string{"subprocess"}, os.Args[2:]...)...)
 	container := Container{cmd: cmd}
 	container.setStdStreams()
-	cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
-	}
+	container.setNamespaces()
 	container.runCommand()
 }
 
@@ -69,6 +67,12 @@ func (c Container) unmountProc() {
 	err := syscall.Unmount("proc", 0)
 	if err != nil {
 		logger.Errorf("failed to mount 'proc' %s", err.Error())
+	}
+}
+
+func (c *Container) setNamespaces() {
+	c.cmd.SysProcAttr = &syscall.SysProcAttr{
+		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
 	}
 }
 
