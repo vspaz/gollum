@@ -21,9 +21,9 @@ func setStdInOut(cmd *exec.Cmd) *exec.Cmd {
 	return cmd
 }
 
-func parent() {
-	logger.Infof("Running %v\n", os.Args[2:])
-	cmd := exec.Command("/proc/self/exe", append([]string{"child"}, os.Args[2:]...)...)
+func fork() {
+	// execute yourself, /proc/self/exe is the copy of the binary image of the caller itself
+	cmd := exec.Command("/proc/self/exe", append([]string{"subprocess"}, os.Args[2:]...)...)
 	cmd = setStdInOut(cmd)
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
@@ -89,7 +89,7 @@ func (c Container) unmountProc() {
 	}
 }
 
-func child() {
+func subprocess() {
 	logger.Infof("Running %v\n", os.Args[2:])
 	container := NewContainer(os.Args)
 	container.setStdStreams()
@@ -104,9 +104,9 @@ func child() {
 func Dispatch(args []string) {
 	switch args[1] {
 	case "run":
-		parent()
-	case "child":
-		child()
+		fork()
+	case "subprocess":
+		subprocess()
 	default:
 		log.Panicf("method undefined %s", args[1])
 	}
