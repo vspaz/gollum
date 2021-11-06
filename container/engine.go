@@ -94,9 +94,9 @@ func child() {
 	container := NewContainer(os.Args)
 	container.setStdStreams()
 	container.setHostname("vspazzz")
-	container.mountProc()
 	container.mountFs("/home/vspaz/ubuntufs")
 	container.changeIntoDirectory("/")
+	container.mountProc()
 	container.runCommand()
 	container.unmountProc()
 }
