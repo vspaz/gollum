@@ -72,7 +72,7 @@ func (c Container) unmountProc() {
 
 func (c *Container) setNamespaces() {
 	c.cmd.SysProcAttr = &syscall.SysProcAttr{
-		Cloneflags: syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
+		Cloneflags: syscall.CLONE_NEWNS | syscall.CLONE_NEWUTS | syscall.CLONE_NEWPID,
 	}
 }
 
@@ -81,7 +81,7 @@ func subprocess() {
 	container := NewContainer(os.Args)
 	container.setStdStreams()
 	container.setHostname("vspazzz")
-	container.mountFs("/home/vspaz/ubuntufs")
+	container.mountFs("/home/vspaz/ubuntufs")  // e.g. https://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/
 	container.changeIntoDirectory("/")
 	container.mountProc()
 	container.runCommand()
