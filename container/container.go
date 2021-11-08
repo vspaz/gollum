@@ -76,7 +76,22 @@ func (c *Container) setNamespaces() {
 			syscall.CLONE_NEWUTS |
 			syscall.CLONE_NEWPID |
 			syscall.CLONE_NEWIPC |
-			syscall.CLONE_NEWNET ,
+			syscall.CLONE_NEWNET |
+			syscall.CLONE_NEWUSER,
+		UidMappings: []syscall.SysProcIDMap{
+			{
+				ContainerID: 0,
+				HostID: os.Getegid(),
+				Size: 1,
+			},
+		},
+		GidMappings: []syscall.SysProcIDMap{
+			{
+				ContainerID: 0,
+				HostID: os.Getegid(),
+				Size: 1,
+			},
+		},
 	}
 }
 
