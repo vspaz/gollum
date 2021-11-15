@@ -1,9 +1,11 @@
 package container
 
 import (
+	"net"
 	"os"
 	"os/exec"
 	"syscall"
+	"time"
 )
 
 func fork() {
@@ -27,6 +29,24 @@ func (c *Container) setStdStreams() {
 	c.cmd.Stdin = os.Stdin
 	c.cmd.Stdout = os.Stdout
 	c.cmd.Stderr = os.Stderr
+}
+
+func (c *Container) awaitNetwork(interval int) {
+	start := time.Now()
+	maxWait := time.Second * time.Duration(interval)
+	for {
+		interfaces, err := net.Interfaces()
+		if err != nil {
+			logger.Fatal("error: %s", err.Error())
+		}
+		if len(interfaces) > 1 {
+			break
+		}
+		if time.Since(start) > maxWait {
+			logger.Fatal("error: timeout")
+		}
+		time.Sleep(time.Second)
+	}
 }
 
 func (c Container) setHostname(hostname string) {
@@ -81,15 +101,15 @@ func (c *Container) setNamespaces() {
 		UidMappings: []syscall.SysProcIDMap{
 			{
 				ContainerID: 0,
-				HostID: os.Getegid(),
-				Size: 1,
+				HostID:      os.Getegid(),
+				Size:        1,
 			},
 		},
 		GidMappings: []syscall.SysProcIDMap{
 			{
 				ContainerID: 0,
-				HostID: os.Getegid(),
-				Size: 1,
+				HostID:      os.Getegid(),
+				Size:        1,
 			},
 		},
 	}
@@ -99,10 +119,11 @@ func subprocess() {
 	logger.Infof("Running %v\n", os.Args[2:])
 	container := NewContainer(os.Args)
 	container.setStdStreams()
-	container.setHostname("vspazzz")
-	container.mountFs("/home/vspaz/ubuntufs")  // e.g. https://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/
+	container.setHostname("gollum")
+	container.mountFs("/home/vspaz/ubuntufs") // e.g. https://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/
 	container.changeIntoDirectory("/")
 	container.mountProc()
+	container.awaitNetwork(3)
 	container.runCommand()
 	container.unmountProc()
 }
