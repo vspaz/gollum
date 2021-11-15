@@ -31,7 +31,7 @@ func (c *Container) setStdStreams() {
 	c.cmd.Stderr = os.Stderr
 }
 
-func (c *Container) awaitNetwork(interval int) {
+func (c *Container) awaitNetworkUp(interval int) {
 	start := time.Now()
 	maxWait := time.Second * time.Duration(interval)
 	for {
@@ -123,7 +123,7 @@ func subprocess() {
 	container.mountFs("/home/vspaz/ubuntufs") // e.g. https://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/
 	container.changeIntoDirectory("/")
 	container.mountProc()
-	container.awaitNetwork(3)
+	container.awaitNetworkUp(5)
 	container.runCommand()
 	container.unmountProc()
 }
