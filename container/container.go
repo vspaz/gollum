@@ -115,12 +115,12 @@ func (c *Container) setNamespaces() {
 	}
 }
 
-func subprocess() {
+func subprocess(imagePath string) {
 	logger.Infof("Running %v\n", os.Args[2:])
 	container := NewContainer(os.Args)
 	container.setStdStreams()
 	container.setHostname("gollum")
-	container.mountFs("/home/vspaz/ubuntufs") // e.g. https://cdimage.ubuntu.com/ubuntu-base/releases/20.04/release/
+	container.mountFs(imagePath)
 	container.changeIntoDirectory("/")
 	container.mountProc()
 	container.awaitNetworkUp(5)
